@@ -1,13 +1,17 @@
 package me.gyanendrokh.meiteimayek.dictionary.activity;
 
+import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.lapism.searchview.widget.SearchView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.ViewPager;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
@@ -18,6 +22,8 @@ public class HomeActivity extends AppCompatActivity {
 
   private PopupMenu mMenu;
 
+  private DrawerLayout mDrawer;
+  private NavigationView mNavView;
   private SearchView mSearchView;
   private TabLayout mTabs;
   private ViewPager mViewPager;
@@ -33,6 +39,8 @@ public class HomeActivity extends AppCompatActivity {
   }
 
   private void initViews() {
+    mDrawer = findViewById(R.id.drawer);
+    mNavView = findViewById(R.id.nav_view);
     mSearchView = findViewById(R.id.searchView);
     mTabs = findViewById(R.id.tabs);
     mViewPager = findViewById(R.id.container);
@@ -41,12 +49,27 @@ public class HomeActivity extends AppCompatActivity {
     setUpViews();
   }
 
-  public void setUpViews() {
+  private void setUpViews() {
+    setUpNavDrawer();
     setUpMenu();
     setUpSearchView();
     setUpTabs();
 
     mFab.setOnClickListener(v -> Toast.makeText(this, "Clicked!", Toast.LENGTH_SHORT).show());
+  }
+
+  private void setUpNavDrawer() {
+    mNavView.setNavigationItemSelectedListener(i -> {
+      new Handler().postDelayed(
+        () -> runOnUiThread(() -> mDrawer.closeDrawers()),
+        350
+      );
+      switch(i.getItemId()) {
+        case R.id.nav_home:
+          return true;
+      }
+      return false;
+    });
   }
 
   private void setUpMenu() {
@@ -64,6 +87,7 @@ public class HomeActivity extends AppCompatActivity {
 
   private void setUpSearchView() {
     mSearchView.setOnMenuClickListener(() -> mMenu.show());
+    mSearchView.setOnLogoClickListener(() -> mDrawer.openDrawer(GravityCompat.START));
   }
 
   private void setUpTabs() {
@@ -71,6 +95,15 @@ public class HomeActivity extends AppCompatActivity {
 
     mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(mTabs));
     mTabs.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
+  }
+
+  @Override
+  public void onBackPressed() {
+    if(mDrawer.isDrawerOpen(GravityCompat.START)) {
+      mDrawer.closeDrawers();
+    }else {
+      super.onBackPressed();
+    }
   }
 
 }
