@@ -7,15 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.ObservableSource;
 import io.reactivex.Single;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import me.gyanendrokh.meiteimayek.dictionary.api.SelectApi;
-import me.gyanendrokh.meiteimayek.dictionary.api.model.Count;
-import me.gyanendrokh.meiteimayek.dictionary.api.model.Word;
 import me.gyanendrokh.meiteimayek.dictionary.api.service.SelectService;
 import me.gyanendrokh.meiteimayek.dictionary.data.WordMapper;
 import me.gyanendrokh.meiteimayek.dictionary.database.WordDao;
@@ -23,109 +20,139 @@ import me.gyanendrokh.meiteimayek.dictionary.database.WordDatabase;
 import me.gyanendrokh.meiteimayek.dictionary.database.WordEntity;
 
 public class Downloader {
-
+  
   private static final String TAG = Downloader.class.getSimpleName();
-
-  private int mStart = 1;
-  private final int mSize = 1000;
-  private int mReturnedSize = -1;
+  
+  private final int mBufferSize = 1000;
   private int mCount = 0;
-
-  private CompositeDisposable mDisposable;
+  private String mLang;
+  
   private WordDao mDao;
   private SelectApi mApi;
-
-  public Downloader(Context context, CompositeDisposable disposable) {
-    mDisposable = disposable;
+  
+  public Downloader(Context context) {
     mApi = SelectService.getInstance().getApi();
     mDao = WordDatabase.getInstance(context).getWordDao();
   }
-
+  
   public Single<Boolean> needDownload() {
-    return Observable.fromArray(Language.ENGLISH, Language.MEITEI_MAYEK, Language.BENGALI)
+    return Observable.fromArray(Language.ENGLISH, Language.BENGALI, Language.MEITEI_MAYEK)
       .concatMap((Function<String, ObservableSource<Boolean>>) s -> mApi.count(s)
-        .map(count -> count.getCount() == mDao.count(s))).filter(b -> !b)
+        .concatMap(count -> Observable.just(mDao.getAll(s).size() == count.getCount())))
+      .filter(b -> !b)
       .firstOrError().subscribeOn(Schedulers.io());
   }
-
+  
   public Observable<DownloadStatus> getDownloader() {
     return Observable.fromArray(Language.ENGLISH, Language.MEITEI_MAYEK, Language.BENGALI)
-      .concatMap((Function<String, ObservableSource<List<WordEntity>>>) lang -> {
-        Log.d(TAG, "Downloading : Lang - " + lang);
-        return downloadAllWords(lang);
-      }).map(l -> new DownloadStatus() {
-        @Override
-        public int getMax() {
+      .concatMap((Function<String, ObservableSource<List<WordEntity>>>) lang -> mApi.count(lang)
+        .map(c -> {
+          setCount(c.getCount());
+          setLang(lang);
           return mCount;
-        }
-
-        @Override
-        public int getProgress() {
-          return l.get(l.size() - 1).getWordId();
-        }
-      });
-  }
-
-  private Observable<List<WordEntity>> downloadAllWords(String lang) {
-    mStart = 1;
-    mReturnedSize = -1;
-
-    return mApi.count(lang)
-      .concatMap((Function<Count, ObservableSource<List<WordEntity>>>) count -> {
-        setCount(count.getCount());
-        int c = mDao.count(lang);
-        if(count.getCount() == c) return Observable.fromIterable(new ArrayList<>());
-        setStart(c + 1);
-
-        Log.d(TAG, "downloadAllWords: Start - " + mStart);
-        return Observable.create(emitter -> {
-          try {
-            downloadWords(lang, emitter);
-          }catch(Exception e) {
-            emitter.onError(e);
+        }).concatMap((Function<Integer, ObservableSource<List<WordEntity>>>) integer -> {
+          List<WordEntity> l = mDao.getAll(mLang);
+          
+          Log.d(TAG, "getDownloader: Lang - " + mLang);
+          Log.d(TAG, "getDownloader: Server Count - " + mCount);
+          Log.d(TAG, "getDownloader: Local Count - " + l.size());
+          return Observable.just(l);
+        })).concatMap((Function<List<WordEntity>, ObservableSource<List<WordEntity>>>) list ->
+        Observable.create((ObservableOnSubscribe<List<DownloadPosition>>) emitter -> {
+          if(list.size() == mCount) {
+            Log.d(TAG, "getDownloader: Completed...");
+            emitter.onComplete();
+          }else {
+            List<DownloadPosition> l = new ArrayList<>();
+            
+            for(int i = 0; i < (mCount / mBufferSize); i++) {
+              final int start = i * mBufferSize + 1;
+              l.add(new DownloadPosition() {
+                @Override
+                public int getStart() {
+                  return start;
+                }
+                
+                @Override
+                public int getSize() {
+                  return mBufferSize;
+                }
+              });
+            }
+            
+            l.add(new DownloadPosition() {
+              @Override
+              public int getStart() {
+                return (mCount / mBufferSize) * mBufferSize + 1;
+              }
+              
+              @Override
+              public int getSize() {
+                return (mCount % mBufferSize);
+              }
+            });
+            
+            emitter.onNext(l);
           }
-        });
+        }).concatMap(l -> Observable.fromIterable(l)
+          .concatMap(pos -> {
+            Log.d(TAG, "Downloader: Size - " + pos.getSize());
+            return mApi.getPositionalWords(mLang, pos.getStart(), pos.getSize())
+              .concatMap(words -> Observable.fromIterable(words)
+                .map(word -> WordMapper.from(word, mLang, false))
+                .buffer(pos.getSize()));
+          }))).map(l -> {
+        mDao.insert(l.toArray(new WordEntity[]{}));
+        
+        int progress;
+        
+        if(l.size() == 0) {
+          progress = 0;
+        }else {
+          Log.d(TAG, String.format("getDownloader: Downloaded from %d - %d",
+            l.get(0).getWordId(), l.get(l.size() - 1).getWordId()));
+          progress = l.get(l.size() - 1).getWordId();
+        }
+        
+        return new DownloadStatus() {
+          @Override
+          public String getLang() {
+            return mLang;
+          }
+          
+          @Override
+          public int getMax() {
+            return mCount;
+          }
+          
+          @Override
+          public int getProgress() {
+            return progress;
+          }
+        };
       });
   }
-
-  private void downloadWords(String lang, ObservableEmitter<List<WordEntity>> emitter)
-    throws RuntimeException {
-    mDisposable.add(mApi.getPositionalWords(lang, mStart, mSize).flatMap(
-      (Function<List<Word>, ObservableSource<WordEntity>>) words -> {
-        setReturnedSize(words.size());
-        Log.d(TAG, "downloadWords: Returned Size - " + mReturnedSize);
-        return Observable.fromIterable(words)
-          .map(word -> WordMapper.from(word, lang, false));
-      }).buffer(mSize / 2).map(l -> {
-        mDao.insert((WordEntity[]) l.toArray());
-        Log.d(TAG, String.format("downloadWords: Downloaded from %d to %d.",
-          l.get(0).getWordId(), l.get(l.size() - 1).getWordId()));
-        return l;
-      }).subscribeOn(Schedulers.io())
-      .subscribe(emitter::onNext, emitter::onError, () -> {
-        if(mReturnedSize != mSize) emitter.onComplete();
-        mStart += mReturnedSize;
-
-        downloadWords(lang, emitter);
-      }));
-  }
-
+  
   private void setCount(int count) {
     mCount = count;
   }
-
-  private void setStart(int start) {
-    mStart = start;
+  
+  public void setLang(String lang) {
+    this.mLang = lang;
   }
-
-  private void setReturnedSize(int size) {
-    mReturnedSize = size;
-  }
-
+  
   public interface DownloadStatus {
+    String getLang();
+    
     int getMax();
-
+    
     int getProgress();
   }
-
+  
+  public interface DownloadPosition {
+    int getStart();
+    
+    int getSize();
+  }
+  
 }
