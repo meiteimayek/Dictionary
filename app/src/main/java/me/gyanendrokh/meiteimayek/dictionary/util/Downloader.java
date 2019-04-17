@@ -14,7 +14,6 @@ import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import me.gyanendrokh.meiteimayek.dictionary.api.SelectApi;
 import me.gyanendrokh.meiteimayek.dictionary.api.service.SelectService;
-import me.gyanendrokh.meiteimayek.dictionary.data.WordMapper;
 import me.gyanendrokh.meiteimayek.dictionary.database.WordDao;
 import me.gyanendrokh.meiteimayek.dictionary.database.WordDatabase;
 import me.gyanendrokh.meiteimayek.dictionary.database.WordEntity;
