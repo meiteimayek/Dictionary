@@ -3,6 +3,7 @@ package me.gyanendrokh.meiteimayek.dictionary.activity;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.lapism.searchview.Search;
 import com.lapism.searchview.widget.SearchView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +18,7 @@ import android.widget.Toast;
 
 import me.gyanendrokh.meiteimayek.dictionary.R;
 import me.gyanendrokh.meiteimayek.dictionary.adapter.HomePagerAdapter;
+import me.gyanendrokh.meiteimayek.dictionary.util.Language;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -29,6 +31,8 @@ public class HomeActivity extends AppCompatActivity {
   private ViewPager mViewPager;
   private FloatingActionButton mFab;
 
+  private String mLang = Language.ENGLISH;
+  
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -78,6 +82,17 @@ public class HomeActivity extends AppCompatActivity {
     mMenu.getMenuInflater().inflate(R.menu.menu_main, mMenu.getMenu());
     mMenu.setOnMenuItemClickListener(item -> {
       if(!item.isChecked()) {
+        int id = item.getItemId();
+        switch(id) {
+          case R.id.menu_lang_eng:
+            mLang = Language.ENGLISH;
+            break;
+          case R.id.menu_lang_mmk:
+            mLang = Language.MEITEI_MAYEK;
+            break;
+          case R.id.menu_lang_beng:
+            mLang = Language.BENGALI;
+        }
         item.setChecked(true);
         return true;
       }
@@ -88,6 +103,20 @@ public class HomeActivity extends AppCompatActivity {
   private void setUpSearchView() {
     mSearchView.setOnMenuClickListener(() -> mMenu.show());
     mSearchView.setOnLogoClickListener(() -> mDrawer.openDrawer(GravityCompat.START));
+    mSearchView.setOnQueryTextListener(new Search.OnQueryTextListener() {
+      @Override
+      public boolean onQueryTextSubmit(CharSequence query) {
+        SearchActivity.open(HomeActivity.this, mLang, query.toString());
+        mSearchView.setText("");
+        mSearchView.close();
+        return true;
+      }
+
+      @Override
+      public void onQueryTextChange(CharSequence newText) {
+
+      }
+    });
   }
 
   private void setUpTabs() {
