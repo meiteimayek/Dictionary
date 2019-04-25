@@ -23,6 +23,8 @@ import io.reactivex.schedulers.Schedulers;
 
 import me.gyanendrokh.meiteimayek.dictionary.R;
 import me.gyanendrokh.meiteimayek.dictionary.adapter.WordPagedAdapter;
+import me.gyanendrokh.meiteimayek.dictionary.fragment.WordBottomSheet;
+import me.gyanendrokh.meiteimayek.dictionary.viewmodel.BottomSheetViewModel;
 import me.gyanendrokh.meiteimayek.dictionary.viewmodel.SearchViewModel;
 
 public class SearchActivity extends AppCompatActivity {
@@ -39,6 +41,7 @@ public class SearchActivity extends AppCompatActivity {
   
   private CompositeDisposable mDisposable;
   private SearchViewModel mModel;
+  private BottomSheetViewModel mBottomSheetModel;
   private WordPagedAdapter mAdapter;
   
   private SearchView mSearchView;
@@ -57,6 +60,7 @@ public class SearchActivity extends AppCompatActivity {
     
     mDisposable = new CompositeDisposable();
     mModel = ViewModelProviders.of(this).get(SearchViewModel.class);
+    mBottomSheetModel = ViewModelProviders.of(this).get(BottomSheetViewModel.class);
     
     mModel.setLang(extras.getString(LANG, ""));
     mModel.setQuery(extras.getString(QUERY, ""));
@@ -119,7 +123,10 @@ public class SearchActivity extends AppCompatActivity {
       return getDrawable(R.drawable.ic_favorite_border_red_24dp);
     });
     
-    mAdapter.setOnClickListener((v, e) -> Toast.makeText(this, e.getWord(), Toast.LENGTH_SHORT).show());
+    mAdapter.setOnClickListener((v, e) -> {
+      mBottomSheetModel.setEntity(e);
+      WordBottomSheet.getInstance().show(getSupportFragmentManager(), this.getClass().getSimpleName());
+    });
     
     mAdapter.setBtnClickListener((v, e) -> {
       if(e == null) return;

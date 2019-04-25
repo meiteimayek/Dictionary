@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +22,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 import me.gyanendrokh.meiteimayek.dictionary.R;
 import me.gyanendrokh.meiteimayek.dictionary.adapter.WordPagedAdapter;
+import me.gyanendrokh.meiteimayek.dictionary.viewmodel.BottomSheetViewModel;
 import me.gyanendrokh.meiteimayek.dictionary.viewmodel.FavoriteViewModel;
 
 public class FavoriteFragment extends Fragment {
@@ -34,6 +34,7 @@ public class FavoriteFragment extends Fragment {
   }
   
   private FavoriteViewModel mViewModel;
+  private BottomSheetViewModel mBottomSheetModel;
   private CompositeDisposable mDisposable;
   private WordPagedAdapter mAdapter;
   
@@ -41,11 +42,15 @@ public class FavoriteFragment extends Fragment {
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     mViewModel = ViewModelProviders.of(this).get(FavoriteViewModel.class);
+    mBottomSheetModel = ViewModelProviders.of(Objects.requireNonNull(getActivity())).get(BottomSheetViewModel.class);
     mDisposable = new CompositeDisposable();
     mAdapter = new WordPagedAdapter();
     
     mAdapter.setBtnIcon(e -> Objects.requireNonNull(getActivity()).getDrawable(R.drawable.ic_delete_forever_24dp));
-    mAdapter.setOnClickListener((v, p) -> Log.d(TAG, "onClick: " + p));
+    mAdapter.setOnClickListener((v, e) -> {
+      mBottomSheetModel.setEntity(e);
+      WordBottomSheet.getInstance().show(Objects.requireNonNull(getActivity()).getSupportFragmentManager(),TAG);
+    });
     mAdapter.setBtnClickListener((v, e) -> {
       e.setIsFav(false);
       Observable.just(mViewModel.getDao())
