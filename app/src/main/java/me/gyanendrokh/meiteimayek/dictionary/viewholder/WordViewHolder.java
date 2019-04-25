@@ -1,5 +1,6 @@
 package me.gyanendrokh.meiteimayek.dictionary.viewholder;
 
+import android.graphics.drawable.Drawable;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -13,14 +14,14 @@ public class WordViewHolder extends RecyclerView.ViewHolder {
 
   private View mRoot;
   private AppCompatTextView mTitle;
-  private AppCompatImageButton mFavBtn;
+  private AppCompatImageButton mImgBtn;
 
   public WordViewHolder(@NonNull View itemView) {
     super(itemView);
 
     mRoot = itemView;
     mTitle = itemView.findViewById(R.id.browse_list_item_title);
-    mFavBtn = itemView.findViewById(R.id.browse_list_item_fav);
+    mImgBtn = itemView.findViewById(R.id.browse_list_item_fav);
   }
 
   public WordViewHolder setTitle(String title) {
@@ -34,22 +35,17 @@ public class WordViewHolder extends RecyclerView.ViewHolder {
   }
 
   public WordViewHolder setBtnClickListener(View.OnClickListener l) {
-    mFavBtn.setOnClickListener(l);
+    mImgBtn.setOnClickListener(l);
     return this;
   }
 
-  public WordViewHolder setFav(boolean isFav) {
-    if(isFav) {
-      mFavBtn.setImageDrawable(mRoot.getContext().getDrawable(R.drawable.ic_favorite_red_24dp));
-    }else {
-      mFavBtn.setImageDrawable(mRoot.getContext().getDrawable(R.drawable.ic_favorite_border_red_24dp));
-    }
+  public WordViewHolder setBtnIcon(Drawable icon) {
+    mImgBtn.setImageDrawable(icon);
     return this;
   }
 
   public void bindTo(WordEntity e, View.OnClickListener onClickListener, View.OnClickListener onBtnClickListener) {
     setTitle(e.getWord());
-    setFav(e.getIsFav());
     setOnClickListener(onClickListener);
     setBtnClickListener(onBtnClickListener);
   }

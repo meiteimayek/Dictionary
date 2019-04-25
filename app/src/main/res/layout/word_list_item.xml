@@ -27,13 +27,12 @@
       android:layout_toStartOf="@id/browse_list_item_fav"
       android:text="@string/title_activity_browse"
       android:textSize="18sp" />
-
+ 
     <androidx.appcompat.widget.AppCompatImageButton
       android:id="@+id/browse_list_item_fav"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:layout_alignParentEnd="true"
-      android:src="@drawable/ic_favorite_border_red_24dp"
       android:backgroundTint="#00dddddd" />
 
   </RelativeLayout>

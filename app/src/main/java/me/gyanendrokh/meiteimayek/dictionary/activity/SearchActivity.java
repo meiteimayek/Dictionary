@@ -8,21 +8,21 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lapism.searchview.Search;
-import com.lapism.searchview.widget.SearchView;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.lapism.searchview.Search;
+import com.lapism.searchview.widget.SearchView;
+
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
+
 import me.gyanendrokh.meiteimayek.dictionary.R;
 import me.gyanendrokh.meiteimayek.dictionary.adapter.WordPagedAdapter;
-import me.gyanendrokh.meiteimayek.dictionary.database.WordEntity;
 import me.gyanendrokh.meiteimayek.dictionary.viewmodel.SearchViewModel;
 
 public class SearchActivity extends AppCompatActivity {
@@ -30,16 +30,21 @@ public class SearchActivity extends AppCompatActivity {
   public static final String QUERY = "query";
   public static final String LANG = "lang";
   
-  private CompositeDisposable mDisposable;
+  public static void open(Context context, String lang, String query) {
+    Intent i = new Intent(context, SearchActivity.class);
+    i.putExtra(SearchActivity.LANG, lang);
+    i.putExtra(SearchActivity.QUERY, query);
+    context.startActivity(i);
+  }
   
+  private CompositeDisposable mDisposable;
   private SearchViewModel mModel;
+  private WordPagedAdapter mAdapter;
   
   private SearchView mSearchView;
   private RecyclerView mSearchList;
   private ProgressBar mSearchProgress;
   private TextView mSearchNoResult;
-  
-  private WordPagedAdapter mAdapter;
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -109,16 +114,14 @@ public class SearchActivity extends AppCompatActivity {
   private void setUpSearchList() {
     mModel.setLang(mModel.getLang());
     mAdapter = new WordPagedAdapter();
-    
-    mAdapter.setOnClickListener((v, p) -> {
-      WordEntity e = mAdapter.getItem(p);
-      if(e == null) return;
-  
-      Toast.makeText(this, e.getWord(), Toast.LENGTH_SHORT).show();
+    mAdapter.setBtnIcon(e -> {
+      if(e.getIsFav()) return getDrawable(R.drawable.ic_favorite_red_24dp);
+      return getDrawable(R.drawable.ic_favorite_border_red_24dp);
     });
     
-    mAdapter.setBtnClickListener((v, p) -> {
-      WordEntity e = mAdapter.getItem(p);
+    mAdapter.setOnClickListener((v, e) -> Toast.makeText(this, e.getWord(), Toast.LENGTH_SHORT).show());
+    
+    mAdapter.setBtnClickListener((v, e) -> {
       if(e == null) return;
       Observable.just(mModel.getDao())
         .map(d -> {
@@ -128,11 +131,16 @@ public class SearchActivity extends AppCompatActivity {
         }).subscribeOn(Schedulers.io())
         .observeOn(AndroidSchedulers.mainThread())
         .doOnNext(w -> {
-          if(w.getIsFav())
-            Toast.makeText(this, String.format("'%s' added to favorite.", w.getWord()), Toast.LENGTH_SHORT).show();
-          else
-            Toast.makeText(this, String.format("'%s' removed from favorite.", w.getWord()), Toast.LENGTH_SHORT).show();
-          v.setFav(e.getIsFav());
+          String s;
+          if(w.getIsFav()) {
+            v.setBtnIcon(getDrawable(R.drawable.ic_favorite_red_24dp));
+            s = String.format("'%s' added to favorite.", w.getWord());
+          }else {
+            v.setBtnIcon(getDrawable(R.drawable.ic_favorite_border_red_24dp));
+            s = String.format("'%s' removed from favorite.", w.getWord());
+          }
+  
+          Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
         }).subscribe();
     });
     
@@ -144,13 +152,6 @@ public class SearchActivity extends AppCompatActivity {
   protected void onStop() {
     super.onStop();
     mDisposable.clear();
-  }
-  
-  public static void open(Context context, String lang, String query) {
-    Intent i = new Intent(context, SearchActivity.class);
-    i.putExtra(SearchActivity.LANG, lang);
-    i.putExtra(SearchActivity.QUERY, query);
-    context.startActivity(i);
   }
   
 }
