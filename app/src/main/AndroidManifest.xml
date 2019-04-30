@@ -35,6 +35,15 @@
       android:name=".activity.HomeActivity"
       android:label="@string/title_activity_home"
       android:theme="@style/AppTheme.NoActionBar" />
+    <activity
+      android:name=".activity.BrowseActivity"
+      android:label="@string/title_activity_browse"
+      android:parentActivityName=".activity.HomeActivity"
+      android:theme="@style/AppTheme.NoActionBar">
+      <meta-data
+        android:name="android.support.PARENT_ACTIVITY"
+        android:value="me.gyanendrokh.meiteimayek.dictionary.activity.HomeActivity" />
+    </activity>
   </application>
 
 </manifest>
