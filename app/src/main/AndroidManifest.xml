@@ -44,6 +44,13 @@
         android:name="android.support.PARENT_ACTIVITY"
         android:value="me.gyanendrokh.meiteimayek.dictionary.activity.HomeActivity" />
     </activity>
+    <activity
+      android:name=".activity.AboutMeActivity"
+      android:label="@string/title_activity_about">
+      <meta-data
+        android:name="android.support.PARENT_ACTIVITY"
+        android:value="me.gyanendrokh.meiteimayek.dictionary.activity.HomeActivity" />
+    </activity>
   </application>
 
 </manifest>

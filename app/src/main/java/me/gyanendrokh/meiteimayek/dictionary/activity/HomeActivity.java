@@ -11,6 +11,7 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.ViewPager;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.PopupMenu;
@@ -71,6 +72,9 @@ public class HomeActivity extends AppCompatActivity {
       switch(i.getItemId()) {
         case R.id.nav_home:
           return true;
+        case R.id.nav_about:
+          startActivity(new Intent(this, AboutMeActivity.class));
+          return false;
       }
       return false;
     });

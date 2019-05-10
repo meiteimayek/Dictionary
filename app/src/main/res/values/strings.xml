@@ -24,4 +24,15 @@
   <string name="gyanendrokh">Gyanendro Kh</string>
   <string name="developed_by_1">Developed with</string>
   <string name="developed_by_2">by Gyanendro Kh.</string>
+  <string name="title_activity_about">About</string>
+  <string name="version">v0.0.1</string>
+  <string name="about_text">This is just a simple Meitei Mayek Dictionary. \nThis project is Open
+    Source licensed under the \"GNU General Public License v2.0\" and all the source code can be
+    found at our Github page.</string>
+  <string name="author">Author</string>
+  <string name="website">Website</string>
+  <string name="github">Github</string>
+  <string name="author_link">https://gyanendrokh.github.io</string>
+  <string name="website_linK">https://gyanendrokh.github.io/meiteimayek/dictionary</string>
+  <string name="github_link">https://github.com/meiteimayek/dictionary</string>
 </resources>
