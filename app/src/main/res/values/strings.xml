@@ -21,4 +21,7 @@
   <string name="downloading">Downloading…</string>
   <string name="no_result_found">No Result Found…</string>
   <string name="no_favorite_yet">No Favorite Yet…</string>
+  <string name="gyanendrokh">Gyanendro Kh</string>
+  <string name="developed_by_1">Developed with</string>
+  <string name="developed_by_2">by Gyanendro Kh.</string>
 </resources>
