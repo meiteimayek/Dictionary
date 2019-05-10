@@ -34,6 +34,8 @@ public class HomeActivity extends AppCompatActivity {
 
   private String mLang = Language.ENGLISH;
   
+  private long mLastClicked = -1;
+  
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -72,6 +74,15 @@ public class HomeActivity extends AppCompatActivity {
       switch(i.getItemId()) {
         case R.id.nav_home:
           return true;
+        case R.id.nav_share:
+          Intent share = new Intent(Intent.ACTION_SEND);
+          share.putExtra(Intent.EXTRA_TEXT, getString(R.string.website_linK));
+          share.setType("text/plain");
+          
+          if(share.resolveActivity(getPackageManager()) != null) {
+            startActivity(share);
+          }
+          return false;
         case R.id.nav_about:
           startActivity(new Intent(this, AboutMeActivity.class));
           return false;
@@ -135,7 +146,13 @@ public class HomeActivity extends AppCompatActivity {
     if(mDrawer.isDrawerOpen(GravityCompat.START)) {
       mDrawer.closeDrawers();
     }else {
-      super.onBackPressed();
+      if(mLastClicked + 2000 > System.currentTimeMillis()) {
+        super.onBackPressed();
+        return;
+      }
+      
+      mLastClicked = System.currentTimeMillis();
+      Toast.makeText(this, "Click again to exit.", Toast.LENGTH_SHORT).show();
     }
   }
 
